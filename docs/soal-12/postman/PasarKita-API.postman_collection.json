@@ -1,0 +1,1365 @@
+{
+  "info": {
+    "name": "PasarKita REST API (SOAL 12)",
+    "description": "Pengujian REST API PasarKita. Jalankan berurutan (Run collection). Ubah variabel baseUrl bila folder berbeda. Catatan: request 3.1 benar-benar membuat pesanan dan mengurangi stok.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Persiapan",
+      "item": [
+        {
+          "name": "0.1 Info API",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));pm.test(\"success = true\", () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "0.2 Logout (memastikan belum login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth.php"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Produk & Kategori (GET)",
+      "item": [
+        {
+          "name": "1.1 GET seluruh produk",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));pm.test(\"success = true\", () => pm.expect(body.success).to.eql(true));",
+                  "pm.test(\"data berupa array & tidak kosong\", () => { pm.expect(body.data).to.be.an(\"array\").that.is.not.empty; });",
+                  "pm.test(\"Setiap produk memiliki nama kategori\", () => body.data.forEach(p => pm.expect(p.kategori.nama).to.be.a(\"string\").and.not.empty));",
+                  "pm.test(\"meta.total = jumlah data\", () => pm.expect(body.meta.total).to.eql(body.data.length));",
+                  "// simpan produk dengan stok terbanyak (untuk uji pesanan) & produk stok habis",
+                  "const sorted = body.data.slice().sort((a, b) => b.stok - a.stok);",
+                  "pm.collectionVariables.set(\"produkId\", sorted[0].id);",
+                  "pm.collectionVariables.set(\"produkHarga\", sorted[0].harga);",
+                  "const habis = body.data.find(p => p.stok === 0);",
+                  "if (habis) pm.collectionVariables.set(\"produkHabisId\", habis.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "Uji 1: mengambil seluruh produk aktif beserta nama kategori."
+          }
+        },
+        {
+          "name": "1.2 GET produk dengan pencarian",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));pm.test(\"success = true\", () => pm.expect(body.success).to.eql(true));",
+                  "pm.test(\"Hasil pencarian mengandung kata kunci\", () => body.data.forEach(p => pm.expect((p.nama + \" \" + (p.asal_daerah||\"\")).toLowerCase() + JSON.stringify(p).toLowerCase()).to.include(\"kopi\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?q=kopi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "kopi"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "1.3 GET produk per kategori",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Semua produk berkategori batik-tenun\", () => body.data.forEach(p => pm.expect(p.kategori.slug).to.eql(\"batik-tenun\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?kategori=batik-tenun",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "kategori",
+                  "value": "batik-tenun"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "1.4 GET detail produk ID valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));pm.test(\"success = true\", () => pm.expect(body.success).to.eql(true));",
+                  "pm.test(\"ID sesuai permintaan\", () => pm.expect(body.data.id).to.eql(Number(pm.collectionVariables.get(\"produkId\"))));",
+                  "pm.test(\"Memuat deskripsi, harga, stok, kategori\", () => { pm.expect(body.data).to.include.keys(\"deskripsi\", \"harga\", \"stok\", \"kategori\"); });",
+                  "pm.collectionVariables.set(\"stokAwal\", body.data.stok);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?id={{produkId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{produkId}}"
+                }
+              ]
+            },
+            "description": "Uji 2: detail produk berdasarkan ID."
+          }
+        },
+        {
+          "name": "1.5 GET detail produk ID tidak ditemukan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));",
+                  "pm.test(\"Pesan 'Produk tidak ditemukan' & data null\", () => { pm.expect(body.message).to.eql(\"Produk tidak ditemukan\"); pm.expect(body.data).to.be.null; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?id=999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "999999"
+                }
+              ]
+            },
+            "description": "Uji 3: ID tidak ada -> 404."
+          }
+        },
+        {
+          "name": "1.6 GET detail produk ID bukan angka",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?id=abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "abc"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "1.7 GET seluruh kategori",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));pm.test(\"success = true\", () => pm.expect(body.success).to.eql(true));",
+                  "pm.test(\"Daftar kategori berisi id, nama, slug, jumlah_produk\", () => { pm.expect(body.data).to.be.an(\"array\").that.is.not.empty; body.data.forEach(c => pm.expect(c).to.include.keys(\"id\", \"nama\", \"slug\", \"jumlah_produk\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/kategori.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "kategori.php"
+              ]
+            },
+            "description": "Uji 4: seluruh kategori."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Autentikasi",
+      "item": [
+        {
+          "name": "2.1 POST pesanan tanpa login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produk\": [\n    {\n      \"produk_id\": 1,\n      \"jumlah\": 1\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "2.2 Login password salah",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth.php"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pembeli@pasarkita.test\",\n  \"password\": \"salah\"\n}"
+            }
+          }
+        },
+        {
+          "name": "2.3 Login pembeli",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));pm.test(\"success = true\", () => pm.expect(body.success).to.eql(true));",
+                  "pm.test(\"Role pembeli\", () => pm.expect(body.data.role).to.eql(\"pembeli\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth.php"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pembeli@pasarkita.test\",\n  \"password\": \"pembeli123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "2.4 GET pengguna yang login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Email pembeli\", () => pm.expect(body.data.email).to.eql(\"pembeli@pasarkita.test\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth.php"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Pesanan (POST)",
+      "item": [
+        {
+          "name": "3.1 POST pesanan valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));pm.test(\"success = true\", () => pm.expect(body.success).to.eql(true));",
+                  "pm.test(\"Mengembalikan ID & kode pesanan\", () => { pm.expect(body.data.id).to.be.a(\"number\"); pm.expect(body.data.kode_pesanan).to.match(/^PK\\d{6}[0-9A-F]{6}$/); });",
+                  "const harga = Number(pm.collectionVariables.get(\"produkHarga\"));",
+                  "pm.test(\"Total dihitung server dari harga database (bukan dari client)\", () => {",
+                  "  pm.expect(body.data.items[0].harga).to.eql(harga);",
+                  "  pm.expect(body.data.subtotal).to.eql(harga * 2);",
+                  "  pm.expect(body.data.total).to.eql(harga * 2 + body.data.ongkos_kirim);",
+                  "});",
+                  "pm.test(\"Status awal pending\", () => pm.expect(body.data.status).to.eql(\"pending\"));",
+                  "pm.collectionVariables.set(\"orderId\", body.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "Uji 5: pesanan valid. Field harga & total sengaja dikirim untuk membuktikan server mengabaikannya.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produk\": [\n    {\n      \"produk_id\": {{produkId}},\n      \"jumlah\": 2\n    }\n  ],\n  \"nama_penerima\": \"Siti Pembeli\",\n  \"telepon\": \"081234567890\",\n  \"alamat_pengiriman\": \"Jl. Merdeka No. 10, Bandung, Jawa Barat 40111\",\n  \"catatan\": \"Uji Postman\",\n  \"metode_pembayaran\": \"transfer\",\n  \"harga\": 1,\n  \"total\": 1000\n}"
+            }
+          }
+        },
+        {
+          "name": "3.2 Cek stok berkurang",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Stok berkurang 2\", () => pm.expect(body.data.stok).to.eql(Number(pm.collectionVariables.get(\"stokAwal\")) - 2));",
+                  "pm.collectionVariables.set(\"stokSetelahPesan\", body.data.stok);",
+                  "pm.collectionVariables.set(\"jumlahMelebihiStok\", body.data.stok + 1);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?id={{produkId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{produkId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "3.3 GET detail pesanan yang dibuat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Pesanan tersimpan di orders & order_details\", () => { pm.expect(body.data.id).to.eql(Number(pm.collectionVariables.get(\"orderId\"))); pm.expect(body.data.items).to.have.lengthOf(1); pm.expect(body.data.items[0].jumlah).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php?id={{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "3.4 POST pesanan stok tidak mencukupi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));",
+                  "pm.test(\"Pesan stok tidak mencukupi\", () => pm.expect(JSON.stringify(body.errors)).to.include(\"tidak mencukupi\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "Uji 6: jumlah melebihi stok -> 422, tidak ada data tersimpan.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produk\": [\n    {\n      \"produk_id\": {{produkId}},\n      \"jumlah\": {{jumlahMelebihiStok}}\n    }\n  ],\n  \"alamat_pengiriman\": \"Jl. Merdeka No. 10, Bandung, Jawa Barat 40111\"\n}"
+            }
+          }
+        },
+        {
+          "name": "3.5 POST pesanan sebagian item gagal (rollback)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "Item pertama valid, item kedua stok habis -> seluruh pesanan dibatalkan (ROLLBACK).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produk\": [\n    {\n      \"produk_id\": {{produkId}},\n      \"jumlah\": 1\n    },\n    {\n      \"produk_id\": {{produkHabisId}},\n      \"jumlah\": 1\n    }\n  ],\n  \"alamat_pengiriman\": \"Jl. Merdeka No. 10, Bandung, Jawa Barat 40111\"\n}"
+            }
+          }
+        },
+        {
+          "name": "3.6 Cek stok tidak berubah setelah rollback",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Stok sama seperti sebelum pesanan gagal\", () => pm.expect(body.data.stok).to.eql(Number(pm.collectionVariables.get(\"stokSetelahPesan\"))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?id={{produkId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{produkId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Request tidak valid",
+      "item": [
+        {
+          "name": "4.1 POST JSON tidak valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));",
+                  "pm.test(\"Pesan format JSON tidak valid\", () => pm.expect(body.message).to.include(\"JSON tidak valid\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "Uji 7: JSON rusak -> 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"produk\": [ {\"produk_id\": 1, \"jumlah\": 2 }"
+            }
+          }
+        },
+        {
+          "name": "4.2 POST data tidak lengkap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));",
+                  "pm.test(\"Rincian error per field\", () => pm.expect(body.errors).to.include.keys(\"produk\", \"telepon\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produk\": [],\n  \"telepon\": \"12\"\n}"
+            }
+          }
+        },
+        {
+          "name": "4.3 POST jumlah bukan angka",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produk\": [\n    {\n      \"produk_id\": 1,\n      \"jumlah\": \"dua\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "4.4 POST Content-Type bukan JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 415\", () => pm.response.to.have.status(415));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "produk_id=1&jumlah=2"
+            }
+          }
+        },
+        {
+          "name": "4.5 PUT ke endpoint pesanan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 405\", () => pm.response.to.have.status(405));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));",
+                  "pm.test(\"Header Allow tersedia\", () => pm.expect(pm.response.headers.get(\"Allow\")).to.include(\"POST\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "Uji 8: method tidak sesuai -> 405.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produk\": [\n    {\n      \"produk_id\": 1,\n      \"jumlah\": 1\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "4.6 DELETE ke endpoint produk",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 405\", () => pm.response.to.have.status(405));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produk.php?id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produk.php"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Hak akses & logout",
+      "item": [
+        {
+          "name": "5.1 Logout pembeli",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));pm.test(\"success = true\", () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth.php"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "5.2 Login admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth.php"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@pasarkita.test\",\n  \"password\": \"admin123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "5.3 Admin tidak boleh membuat pesanan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 403\", () => pm.response.to.have.status(403));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pesanan.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pesanan.php"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produk\": [\n    {\n      \"produk_id\": 1,\n      \"jumlah\": 1\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "5.4 Logout admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth.php"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "5.5 GET pengguna setelah logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Content-Type application/json\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\"));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Format response konsisten (success, message, data)\", () => {",
+                  "  pm.expect(body).to.have.property(\"success\");",
+                  "  pm.expect(body).to.have.property(\"message\");",
+                  "  pm.expect(body).to.have.property(\"data\");",
+                  "});",
+                  "pm.test(\"Status 401\", () => pm.response.to.have.status(401));pm.test(\"success = false\", () => pm.expect(body.success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth.php",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth.php"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost/pasarkita"
+    },
+    {
+      "key": "produkId",
+      "value": "1"
+    },
+    {
+      "key": "produkHarga",
+      "value": "0"
+    },
+    {
+      "key": "produkHabisId",
+      "value": "0"
+    },
+    {
+      "key": "stokAwal",
+      "value": "0"
+    },
+    {
+      "key": "stokSetelahPesan",
+      "value": "0"
+    },
+    {
+      "key": "jumlahMelebihiStok",
+      "value": "1"
+    },
+    {
+      "key": "orderId",
+      "value": "0"
+    }
+  ]
+}

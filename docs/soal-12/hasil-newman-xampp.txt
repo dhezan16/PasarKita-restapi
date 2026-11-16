@@ -1,0 +1,254 @@
+(node:11428) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+newman
+
+PasarKita REST API (SOAL 12)
+
+Folder 0. Persiapan
+Sub-folder 0.1 Info API
+  GET http://localhost/pasarkita/api [200 OK, 2.33kB, 36ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  success = true
+
+Sub-folder 0.2 Logout (memastikan belum login)
+  DELETE http://localhost/pasarkita/api/auth.php [200 OK, 694B, 5ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+
+Folder 1. Produk & Kategori (GET)
+Sub-folder 1.1 GET seluruh produk
+  GET http://localhost/pasarkita/api/produk.php?limit=100 [200 OK, 11.28kB, 19ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  success = true
+  Pass  data berupa array & tidak kosong
+  Pass  Setiap produk memiliki nama kategori
+  Pass  meta.total = jumlah data
+
+Sub-folder 1.2 GET produk dengan pencarian
+  GET http://localhost/pasarkita/api/produk.php?q=kopi [200 OK, 1.38kB, 8ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  success = true
+  Pass  Hasil pencarian mengandung kata kunci
+
+Sub-folder 1.3 GET produk per kategori
+  GET http://localhost/pasarkita/api/produk.php?kategori=batik-tenun [200 OK, 3.11kB, 6ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  Semua produk berkategori batik-tenun
+
+Sub-folder 1.4 GET detail produk ID valid
+  GET http://localhost/pasarkita/api/produk.php?id=7 [200 OK, 1.41kB, 6ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  success = true
+  Pass  ID sesuai permintaan
+  Pass  Memuat deskripsi, harga, stok, kategori
+
+Sub-folder 1.5 GET detail produk ID tidak ditemukan
+  GET http://localhost/pasarkita/api/produk.php?id=999999 [404 Not Found, 578B, 6ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 404
+  Pass  success = false
+  Pass  Pesan 'Produk tidak ditemukan' & data null
+
+Sub-folder 1.6 GET detail produk ID bukan angka
+  GET http://localhost/pasarkita/api/produk.php?id=abc [400 Bad Request, 572B, 5ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 400
+  Pass  success = false
+
+Sub-folder 1.7 GET seluruh kategori
+  GET http://localhost/pasarkita/api/kategori.php [200 OK, 1.96kB, 7ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  success = true
+  Pass  Daftar kategori berisi id, nama, slug, jumlah_produk
+
+Folder 2. Autentikasi
+Sub-folder 2.1 POST pesanan tanpa login
+  POST http://localhost/pasarkita/api/pesanan.php [401 Unauthorized, 648B, 4ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 401
+  Pass  success = false
+
+Sub-folder 2.2 Login password salah
+  POST http://localhost/pasarkita/api/auth.php [401 Unauthorized, 585B, 219ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 401
+  Pass  success = false
+
+Sub-folder 2.3 Login pembeli
+  POST http://localhost/pasarkita/api/auth.php [200 OK, 784B, 269ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  success = true
+  Pass  Role pembeli
+
+Sub-folder 2.4 GET pengguna yang login
+  GET http://localhost/pasarkita/api/auth.php [200 OK, 705B, 18ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  Email pembeli
+
+Folder 3. Pesanan (POST)
+Sub-folder 3.1 POST pesanan valid
+  POST http://localhost/pasarkita/api/pesanan.php [201 Created, 1.49kB, 9ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 201
+  Pass  success = true
+  Pass  Mengembalikan ID & kode pesanan
+  Pass  Total dihitung server dari harga database (bukan dari client)
+  Pass  Status awal pending
+
+Sub-folder 3.2 Cek stok berkurang
+  GET http://localhost/pasarkita/api/produk.php?id=7 [200 OK, 1.41kB, 18ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  Stok berkurang 2
+
+Sub-folder 3.3 GET detail pesanan yang dibuat
+  GET http://localhost/pasarkita/api/pesanan.php?id=3 [200 OK, 1.44kB, 6ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  Pesanan tersimpan di orders & order_details
+
+Sub-folder 3.4 POST pesanan stok tidak mencukupi
+  POST http://localhost/pasarkita/api/pesanan.php [422 Unprocessable Entity, 730B, 7ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 422
+  Pass  success = false
+  Pass  Pesan stok tidak mencukupi
+
+Sub-folder 3.5 POST pesanan sebagian item gagal (rollback)
+  POST http://localhost/pasarkita/api/pesanan.php [422 Unprocessable Entity, 730B, 19ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 422
+  Pass  success = false
+
+Sub-folder 3.6 Cek stok tidak berubah setelah rollback
+  GET http://localhost/pasarkita/api/produk.php?id=7 [200 OK, 1.41kB, 5ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  Stok sama seperti sebelum pesanan gagal
+
+Folder 4. Request tidak valid
+Sub-folder 4.1 POST JSON tidak valid
+  POST http://localhost/pasarkita/api/pesanan.php [400 Bad Request, 560B, 6ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 400
+  Pass  success = false
+  Pass  Pesan format JSON tidak valid
+
+Sub-folder 4.2 POST data tidak lengkap
+  POST http://localhost/pasarkita/api/pesanan.php [422 Unprocessable Entity, 808B, 7ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 422
+  Pass  success = false
+  Pass  Rincian error per field
+
+Sub-folder 4.3 POST jumlah bukan angka
+  POST http://localhost/pasarkita/api/pesanan.php [422 Unprocessable Entity, 688B, 5ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 422
+  Pass  success = false
+
+Sub-folder 4.4 POST Content-Type bukan JSON
+  POST http://localhost/pasarkita/api/pesanan.php [415 Unsupported Media Type, 605B, 5ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 415
+  Pass  success = false
+
+Sub-folder 4.5 PUT ke endpoint pesanan
+  PUT http://localhost/pasarkita/api/pesanan.php [405 Method Not Allowed, 650B, 4ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 405
+  Pass  success = false
+  Pass  Header Allow tersedia
+
+Sub-folder 4.6 DELETE ke endpoint produk
+  DELETE http://localhost/pasarkita/api/produk.php?id=1 [405 Method Not Allowed, 641B, 3ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 405
+  Pass  success = false
+
+Folder 5. Hak akses & logout
+Sub-folder 5.1 Logout pembeli
+  DELETE http://localhost/pasarkita/api/auth.php [200 OK, 678B, 6ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+  Pass  success = true
+
+Sub-folder 5.2 Login admin
+  POST http://localhost/pasarkita/api/auth.php [200 OK, 887B, 289ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+
+Sub-folder 5.3 Admin tidak boleh membuat pesanan
+  POST http://localhost/pasarkita/api/pesanan.php [403 Forbidden, 603B, 7ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 403
+  Pass  success = false
+
+Sub-folder 5.4 Logout admin
+  DELETE http://localhost/pasarkita/api/auth.php [200 OK, 678B, 18ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 200
+
+Sub-folder 5.5 GET pengguna setelah logout
+  GET http://localhost/pasarkita/api/auth.php [401 Unauthorized, 746B, 4ms]
+  Pass  Content-Type application/json
+  Pass  Format response konsisten (success, message, data)
+  Pass  Status 401
+  Pass  success = false
+
+------------------------------------------------------------------
+|                         |          executed |           failed |
+--------------------------+-------------------+-------------------
+|              iterations |                 1 |                0 |
+--------------------------+-------------------+-------------------
+|                requests |                30 |                0 |
+--------------------------+-------------------+-------------------
+|            test-scripts |                30 |                0 |
+--------------------------+-------------------+-------------------
+|      prerequest-scripts |                 0 |                0 |
+--------------------------+-------------------+-------------------
+|              assertions |               133 |                0 |
+------------------------------------------------------------------
+| total run duration: 3.4s                                       |
+------------------------------------------------------------------
+| total data received: 24.98kB (approx)                          |
+------------------------------------------------------------------
+| average response time: 34ms [min: 3ms, max: 289ms, s.d.: 75ms] |
+------------------------------------------------------------------

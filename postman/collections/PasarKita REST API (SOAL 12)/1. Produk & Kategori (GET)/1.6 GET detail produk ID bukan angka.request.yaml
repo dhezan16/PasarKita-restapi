@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/produk.php?id=abc"
+method: GET
+queryParams:
+  id: abc
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Content-Type application/json", () => pm.expect(pm.response.headers.get("Content-Type")).to.include("application/json"));
+      const body = pm.response.json();
+      pm.test("Format response konsisten (success, message, data)", () => {
+        pm.expect(body).to.have.property("success");
+        pm.expect(body).to.have.property("message");
+        pm.expect(body).to.have.property("data");
+      });
+      pm.test("Status 400", () => pm.response.to.have.status(400));pm.test("success = false", () => pm.expect(body.success).to.eql(false));
+    language: text/javascript
+order: 6000

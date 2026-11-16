@@ -1,0 +1,122 @@
+
+== 1. Koneksi database & struktur ==
+  [PASS] Koneksi MySQLi ke database "pasarkita"
+  [PASS] Tabel users tersedia
+  [PASS] Tabel categories tersedia
+  [PASS] Tabel products tersedia
+  [PASS] Tabel orders tersedia
+  [PASS] Tabel order_details tersedia
+  [PASS] Foreign key terpasang (4 relasi)  (ditemukan 4)
+  [PASS] Database menolak stok negatif  (error MySQL 1690)
+  [PASS] Foreign key menolak kategori yang tidak ada  (error MySQL 1452)
+  [PASS] Kategori yang masih dipakai produk tidak bisa dihapus (RESTRICT)
+
+== 2. Halaman publik, daftar produk, pencarian, filter, detail ==
+  [PASS] Homepage dapat dibuka (200)
+  [PASS] Daftar produk tampil dengan jumlah benar  (18 produk aktif)
+  [PASS] Pencarian "kopi" menemukan Kopi Gayo
+  [PASS] Pencarian "kopi" tidak menampilkan produk lain (Batik)
+  [PASS] Pencarian dengan input injeksi SQL aman (0 hasil, tanpa error)
+  [PASS] Filter kategori Jamu & Herbal hanya menampilkan produk jamu
+  [PASS] Urutan harga termurah berfungsi  (harga pertama 20000)
+  [PASS] Detail produk tampil (nama, harga, stok)
+  [PASS] Slug produk tidak dikenal menghasilkan 404
+  [PASS] Output pencarian di-escape (anti XSS)
+
+== 3. Proteksi halaman untuk tamu ==
+  [PASS] Tamu diarahkan ke login saat membuka admin/index.php
+  [PASS] Tamu diarahkan ke login saat membuka admin/products/index.php
+  [PASS] Tamu diarahkan ke login saat membuka admin/orders/index.php
+  [PASS] Tamu diarahkan ke login saat membuka checkout/index.php
+  [PASS] Tamu diarahkan ke login saat membuka account/orders.php
+  [PASS] POST tanpa token CSRF ditolak (403)
+  [PASS] POST dengan token CSRF palsu ditolak (403)
+
+== 4. Login admin & CRUD produk (termasuk upload gambar) ==
+  [PASS] Login dengan password salah ditolak
+  [PASS] Login admin berhasil & diarahkan ke dashboard
+  [PASS] Session ID diregenerasi setelah login
+  [PASS] Dashboard admin menampilkan statistik jumlah produk  (18 produk)
+  [PASS] Dashboard admin menampilkan statistik jumlah pesanan  (3 pesanan)
+  [PASS] Daftar transaksi admin dapat dibuka
+  [PASS] Validasi menolak harga bukan angka & stok negatif
+  [PASS] Produk invalid tidak tersimpan
+  [PASS] Upload file PHP yang menyamar sebagai .jpg ditolak
+  [PASS] Tambah produk A (dengan gambar) berhasil
+  [PASS] Gambar tersimpan di uploads/products dengan nama acak
+  [PASS] Tambah produk B (tanpa gambar, harga format "25.000") berhasil
+  [PASS] Produk baru tampil di daftar produk admin
+  [PASS] Edit stok produk B menjadi 4
+  [PASS] Edit stok produk B kembali menjadi 3
+
+== 5. Registrasi & login pembeli ==
+  [PASS] Registrasi dengan password lemah ditolak
+  [PASS] Registrasi dengan email yang sudah terdaftar ditolak
+  [PASS] Registrasi pembeli berhasil
+  [PASS] Password disimpan sebagai hash (password_hash) bukan teks asli
+  [PASS] Logout (POST + CSRF) berhasil
+  [PASS] Logout via GET tidak memproses apa pun (hanya redirect)
+  [PASS] Login pembeli dengan password_verify berhasil
+
+== 6. Akses pembeli ke halaman admin ==
+  [PASS] Pembeli mendapat 403 di admin/index.php
+  [PASS] Pembeli mendapat 403 di admin/products/create.php
+  [PASS] Pembeli mendapat 403 di admin/orders/index.php
+  [PASS] Pembeli tidak dapat menghapus produk
+  [PASS] Admin tidak dapat checkout (403)
+
+== 7. Keranjang belanja ==
+  [PASS] Tambah produk A x2 ke keranjang
+  [PASS] Keranjang menampilkan 2 produk
+  [PASS] Field "price" kiriman browser diabaikan (subtotal A = Rp 20.000)
+  [PASS] Subtotal & total dihitung benar (45.000 + ongkir 10.000 = 55.000)
+  [PASS] Tambah melebihi stok ditolak
+  [PASS] Ubah jumlah produk A menjadi 3
+  [PASS] Ubah jumlah melebihi stok ditolak (tetap 3)
+  [PASS] Jumlah negatif ditolak (tetap 3)
+  [PASS] Hapus produk B dari keranjang
+
+== 8. Checkout, orders, order_details, pengurangan stok ==
+  [PASS] Validasi checkout menolak HP/alamat/metode bayar tidak valid
+  [PASS] Checkout invalid tidak membuat pesanan
+  [PASS] Checkout berhasil & diarahkan ke halaman sukses
+  [PASS] Data tersimpan di tabel orders
+  [PASS] Total dihitung server: subtotal 55.000 + ongkir 10.000 = 65.000
+  [PASS] Data tersimpan di tabel order_details (2 baris)
+  [PASS] Snapshot nama & harga produk tersimpan (A: 3 x 10.000)
+  [PASS] Stok produk A berkurang 5 -> 2
+  [PASS] Stok produk B berkurang 3 -> 2
+  [PASS] Halaman sukses menampilkan kode pesanan
+  [PASS] Keranjang dikosongkan setelah checkout
+  [PASS] Tamu tidak dapat melihat halaman sukses pesanan orang lain
+  [PASS] Pesanan muncul di "Pesanan Saya"
+
+== 9. Histori harga (snapshot) setelah harga produk diubah ==
+  [PASS] Harga produk A diubah menjadi 15.000
+  [PASS] Harga di order_details tetap 10.000 (histori terjaga)
+
+== 10. Validasi stok tidak mencukupi + rollback ==
+  [PASS] Checkout ditolak karena stok tidak mencukupi
+  [PASS] Tidak ada order baru tersimpan (rollback)
+  [PASS] Stok produk A tidak ikut berkurang (rollback) tetap 2
+  [PASS] Stok produk B tetap 1
+
+== 11. Admin mengubah status & membatalkan pesanan ==
+  [PASS] Status pesanan diubah menjadi "diproses"
+  [PASS] Pesanan dibatalkan
+  [PASS] Stok dikembalikan setelah pembatalan (A: 2 -> 5, B: 1 -> 2)
+  [PASS] Pesanan yang sudah dibatalkan tidak bisa diubah lagi
+
+== 12. Hapus produk & integritas histori ==
+  [PASS] Hapus produk A berhasil
+  [PASS] File gambar produk A ikut terhapus
+  [PASS] Detail pesanan tetap ada, product_id menjadi NULL, nama & harga snapshot tetap
+  [PASS] Pembeli tetap dapat melihat detail pesanan lama (produk dihapus)
+  [PASS] Hapus produk B berhasil
+
+== Pembersihan data uji ==
+  [PASS] Data uji dihapus
+
+==============================
+HASIL: 92 / 92 pengujian LULUS
+Waktu: 2026-11-16 13:34:16 | Target: http://localhost/pasarkita | PHP 8.2.12 | MySQL 10.4.32-MariaDB
